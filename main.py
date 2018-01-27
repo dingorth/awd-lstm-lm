@@ -189,7 +189,10 @@ stored_loss = 100000000
 
 # At any point you can hit Ctrl + C to break out of training early.
 try:
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
+    if args.GD == 'AvSGD':
+        optimizer = torch.optim.ASGD(model.patameters(), lr=args.lr, weight_decay=args.wdecay, t0=args.T)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
     for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
         train()
@@ -229,10 +232,14 @@ try:
                 print('Saving Normal!')
                 stored_loss = val_loss
 
-            if 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
-                print('Switching!')
-                optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
-                #optimizer.param_groups[0]['lr'] /= 2.
+		
+            if args.GD == 'NT-AWDSGD':
+	            if 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
+			
+	                print('Switching!')
+	
+        	        optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
+                    #optimizer.param_groups[0]['lr'] /= 2.
             best_val_loss.append(val_loss)
 
 except KeyboardInterrupt:
