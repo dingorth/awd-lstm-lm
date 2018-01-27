@@ -12,6 +12,15 @@ import model
 from utils import batchify, get_batch, repackage_hidden
 
 parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Language Model')
+
+
+parser.add_argument('--T', type=int, default=1,
+                    help='T from AvSGD algorithm')
+parser.add_argument('--GD', type=str, default='NT-AWDSGD',
+	            help='type of gradient descent')
+parse.add_argument('--logging', type=str, default='stdout',
+                    help='logging type') # "parsable aka csv"
+
 parser.add_argument('--data', type=str, default='data/penn/',
                     help='location of the data corpus')
 parser.add_argument('--model', type=str, default='LSTM',
@@ -179,7 +188,10 @@ stored_loss = 100000000
 
 # At any point you can hit Ctrl + C to break out of training early.
 try:
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
+    if args.GD == 'AvSGD':
+        optimizer = torch.optim.ASGD(model.patameters(), lr=args.lr, weight_decay=args.wdecay, t0=args.T)
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay)
     for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
         train()
@@ -219,10 +231,14 @@ try:
                 print('Saving Normal!')
                 stored_loss = val_loss
 
-            if 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
-                print('Switching!')
-                optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
-                #optimizer.param_groups[0]['lr'] /= 2.
+		
+            if args.GD == 'NT-AWDSGD':
+	            if 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
+			
+	                print('Switching!')
+	
+        	        optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
+                    #optimizer.param_groups[0]['lr'] /= 2.
             best_val_loss.append(val_loss)
 
 except KeyboardInterrupt:
