@@ -17,9 +17,10 @@ parser = argparse.ArgumentParser(description='PyTorch PennTreeBank RNN/LSTM Lang
 parser.add_argument('--T', type=int, default=1,
                     help='T from AvSGD algorithm')
 parser.add_argument('--GD', type=str, default='NT-AWDSGD',
-	            help='type of gradient descent')
+                    help='type of gradient descent')
 parse.add_argument('--logging', type=str, default='stdout',
                     help='logging type') # "parsable aka csv"
+
 
 parser.add_argument('--data', type=str, default='data/penn/',
                     help='location of the data corpus')
