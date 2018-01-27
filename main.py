@@ -18,7 +18,7 @@ parser.add_argument('--T', type=int, default=1,
                     help='T from AvSGD algorithm')
 parser.add_argument('--GD', type=str, default='NT-AWDSGD',
                     help='type of gradient descent')
-parse.add_argument('--logging', type=str, default='stdout',
+parser.add_argument('--logging', type=str, default='stdout',
                     help='logging type') # "parsable aka csv"
 
 
