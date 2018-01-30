@@ -19,7 +19,11 @@ parser.add_argument('--T', type=int, default=1,
 parser.add_argument('--GD', type=str, default='NT-AWDSGD',
                     help='type of gradient descent')
 parser.add_argument('--logging', type=str, default='default',
-                    help='logging type') # "parsable aka csv"
+                    help='logging type') # "parsable aka 
+parser.add_argument('--evalbatchsize', type=int, default=10,
+                    help='eval batch size')
+parser.add_argument('--testbatchsize', type=int, default=1,
+                    help='test batch size')                    
 
 
 parser.add_argument('--data', type=str, default='data/penn/',
@@ -88,8 +92,8 @@ if torch.cuda.is_available():
 
 corpus = data.Corpus(args.data)
 
-eval_batch_size = 10
-test_batch_size = 1
+eval_batch_size = args.evalbatchsize #10
+test_batch_size = args.testbatchsize #1
 train_data = batchify(corpus.train, args.batch_size, args)
 val_data = batchify(corpus.valid, eval_batch_size, args)
 test_data = batchify(corpus.test, test_batch_size, args)
@@ -172,8 +176,13 @@ def train():
         if batch % args.log_interval == 0 and batch > 0:
             cur_loss = total_loss[0] / args.log_interval
             elapsed = time.time() - start_time
-            print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
+            if args.logging == 'default':
+            	print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
                     'loss {:5.2f} | ppl {:8.2f}'.format(
+                epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
+                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
+            else:
+            	print('{:3d}, {:5d}, {:02.2f}, {:5.2f}, {:5.2f}, {:8.2f}'.format(
                 epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
                 elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
             total_loss = 0
