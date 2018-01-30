@@ -18,12 +18,9 @@ parser.add_argument('--T', type=int, default=1,
                     help='T from AvSGD algorithm')
 parser.add_argument('--GD', type=str, default='NT-AWDSGD',
                     help='type of gradient descent')
-parser.add_argument('--logging', type=str, default='default' #stdoutcsv
+parser.add_argument('--logging', type=str, default='default',
                     help='logging type') # "parsable aka csv"
-parser.add_argument('--testbatchsize', type=int, default=1,
-                    help='test batch size')
-parser.add_argument('--evalbatchsize', type=int, default=10,
-                    help='eval batch size')
+
 
 parser.add_argument('--data', type=str, default='data/penn/',
                     help='location of the data corpus')
@@ -91,8 +88,8 @@ if torch.cuda.is_available():
 
 corpus = data.Corpus(args.data)
 
-eval_batch_size = args.evalbatchsize #10
-test_batch_size = args.testbatchsize #1
+eval_batch_size = 10
+test_batch_size = 1
 train_data = batchify(corpus.train, args.batch_size, args)
 val_data = batchify(corpus.valid, eval_batch_size, args)
 test_data = batchify(corpus.test, test_batch_size, args)
@@ -175,15 +172,10 @@ def train():
         if batch % args.log_interval == 0 and batch > 0:
             cur_loss = total_loss[0] / args.log_interval
             elapsed = time.time() - start_time
-            if args.logging == "default":
-                print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                        'loss {:5.2f} | ppl {:8.2f}'.format(
-                    epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
-                    elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
-            else:
-                print('{:3d}, {:5d}/{:5d}, {:02.2f}, {:5.2f}, {:5.2f}, {:8.2f}'.format(
-                    epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
-                    elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
+            print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
+                    'loss {:5.2f} | ppl {:8.2f}'.format(
+                epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
+                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
             total_loss = 0
             start_time = time.time()
         ###
@@ -211,20 +203,21 @@ try:
                 prm.data = optimizer.state[prm]['ax'].clone()
 
             val_loss2 = evaluate(val_data)
-            if args.logging == "default":
-                print('-' * 89)
-                print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                        'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
-                                                val_loss2, math.exp(val_loss2)))
-                print('-' * 89)
+            if args.logging == 'default':
+            	print('-' * 89)
+            	print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
+                    'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
+                                               val_loss2, math.exp(val_loss2)))
+            	print('-' * 89)
             else:
-                print('{:3d}, {:5.2f}, {:5.2f}, {:8.2f}'.format(epoch, (time.time() - epoch_start_time), val_loss2, math.exp(val_loss2)))
+            	print('{:3d}, {:5.2f}, {:5.2f}, {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
+                                               val_loss2, math.exp(val_loss2)))
 
             if val_loss2 < stored_loss:
                 with open(args.save, 'wb') as f:
                     torch.save(model, f)
-                if args.logging == "default":
-                    print('Saving Averaged!')
+                if args.logging == 'default':
+                	print('Saving Averaged!')
                 stored_loss = val_loss2
 
             for prm in model.parameters():
@@ -232,36 +225,34 @@ try:
 
         else:
             val_loss = evaluate(val_data, eval_batch_size)
-            if args.logging = "default":
-                print('-' * 89)
-                print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                        'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
-                                                val_loss, math.exp(val_loss)))
-                print('-' * 89)
+            if args.logging == 'default':
+            	print('-' * 89)
+            	print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
+                    'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
+                                               val_loss, math.exp(val_loss)))
+            	print('-' * 89)
             else:
-                print('{:3d}, {:5.2f}, {:5.2f}, {:8.2f}'.format(epoch, (time.time() - epoch_start_time), val_loss, math.exp(val_loss)))
+            	print('{:3d}, {:5.2f}, {:5.2f}, {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
+                                               val_loss2, math.exp(val_loss2)))
 
             if val_loss < stored_loss:
                 with open(args.save, 'wb') as f:
                     torch.save(model, f)
-                if args.logging == "default":    
-                    print('Saving Normal!')
+                if args.logging == 'default':
+                	print('Saving Normal!')
                 stored_loss = val_loss
 
 		
             if args.GD == 'NT-AWDSGD':
 	            if 't0' not in optimizer.param_groups[0] and (len(best_val_loss)>args.nonmono and val_loss > min(best_val_loss[:-args.nonmono])):
-                        if args.logging == "default":
-	                    print('Switching!')
 	
         	        optimizer = torch.optim.ASGD(model.parameters(), lr=args.lr, t0=0, lambd=0., weight_decay=args.wdecay)
                     #optimizer.param_groups[0]['lr'] /= 2.
             best_val_loss.append(val_loss)
 
 except KeyboardInterrupt:
-    if args.logging == "default":
-        print('-' * 89)
-        print('Exiting from training early')
+    print('-' * 89)
+    print('Exiting from training early')
 
 # Load the best saved model.
 with open(args.save, 'rb') as f:
@@ -269,11 +260,7 @@ with open(args.save, 'rb') as f:
 
 # Run on test data.
 test_loss = evaluate(test_data, test_batch_size)
-if args.logging == "default":
-    print('=' * 89)
-    print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
-        test_loss, math.exp(test_loss)))
-    print('=' * 89)
-else:
-    print('TEST DATA')
-    print('{:5.2f}, {:8.2f}'.format(test_loss, math.exp(test_loss)))
+print('=' * 89)
+print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
+    test_loss, math.exp(test_loss)))
+print('=' * 89)
