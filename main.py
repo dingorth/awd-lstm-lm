@@ -242,7 +242,7 @@ try:
             	print('-' * 89)
             else:
             	print('{:3d}, {:5.2f}, {:5.2f}, {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
-                                               val_loss2, math.exp(val_loss2)))
+                                               val_loss, math.exp(val_loss)))
 
             if val_loss < stored_loss:
                 with open(args.save, 'wb') as f:
