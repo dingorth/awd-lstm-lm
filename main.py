@@ -20,7 +20,10 @@ parser.add_argument('--GD', type=str, default='NT-AWDSGD',
                     help='type of gradient descent')
 parser.add_argument('--logging', type=str, default='stdout',
                     help='logging type') # "parsable aka csv"
-
+parser.add_argument('--testbatchsize', type=int, default=1,
+                    help='test batch size')
+parser.add_argument('--evalbatchsize', type=int, default=10,
+                    help='eval batch size')
 
 parser.add_argument('--data', type=str, default='data/penn/',
                     help='location of the data corpus')
@@ -88,8 +91,8 @@ if torch.cuda.is_available():
 
 corpus = data.Corpus(args.data)
 
-eval_batch_size = 10
-test_batch_size = 1
+eval_batch_size = args.evalbatchsize #10
+test_batch_size = args.testbatchsize #1
 train_data = batchify(corpus.train, args.batch_size, args)
 val_data = batchify(corpus.valid, eval_batch_size, args)
 test_data = batchify(corpus.test, test_batch_size, args)
