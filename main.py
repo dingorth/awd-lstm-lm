@@ -1,4 +1,5 @@
 import argparse
+import sys
 import time
 import math
 import numpy as np
@@ -180,11 +181,11 @@ def train():
             	print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
                     'loss {:5.2f} | ppl {:8.2f}'.format(
                 epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
-                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
+                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)), file=sys.stderr)
             else:
             	print('{:3d}, {:5d}, {:02.2f}, {:5.2f}, {:5.2f}, {:8.2f}'.format(
                 epoch, batch, len(train_data) // args.bptt, optimizer.param_groups[0]['lr'],
-                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)))
+                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss)), file=sys.stderr)
             total_loss = 0
             start_time = time.time()
         ###
